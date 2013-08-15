@@ -25,13 +25,13 @@ int pirSensorCalibrationTime  = 30;
 boolean movement        = false;
 //last second movement was detected.
 int movementLast        = 0;
-//threshold for gaps in movement.
-int movementThreshold   = 10;
+//threshold for gaps in seconds for movement.
+int movementThreshold   = 5;
 
 //LED pins.
-const int greenLED = 10;
+const int greenLED = 12;
 const int redLED   = 11;
-const int yellowLED= 12;
+const int yellowLED= 10;
 
 //state of the room (0 = open, 1 = occupied)
 int roomState      = 0;
@@ -41,7 +41,6 @@ int loopDelay      = 2;
 
 //SETUP
 void setup(){
-  
   //record serial output for monitoring
   Serial.begin(9600);
   // run setup function for the LEDs
@@ -53,10 +52,11 @@ void setup(){
   // run setup function for the PR sensor
   setupPrSensor();
   strobeLeds(2);
-  // System ready.
-  Serial.println("System Ready.");
+  delay(500);
   // turn off all leds.
   flashLeds(1);
+  // System ready.
+  Serial.println("System Ready.");
 }
 
 //LOOP
@@ -147,7 +147,6 @@ void checkPrSensor(){
   prSensorValue = analogRead(prSensorPin);
   //have value changed dramatically since last reading?
   if (abs(prSensorLastValue - prSensorValue) >= prSensorThreshold){
-    Serial.println(abs(prSensorLastValue-prSensorValue));
     lightChanged = true;
     //was last reading greater then this reading?
     if (prSensorLastValue > prSensorValue){
@@ -246,10 +245,10 @@ int flashLeds(int flashLoop){
   int start = millis();
   setLeds(LOW,LOW,LOW);
   for( int i=0; i < flashLoop; i++){
-    delay(100);
     setLeds(HIGH,HIGH,HIGH);
-    delay(100);
+    delay(200);
     setLeds(LOW,LOW,LOW);
+    delay(200);
   }
 
   return millis()-start;
@@ -260,12 +259,12 @@ int strobeLeds(int strobeLoop){
   int start = millis();
   setLeds(LOW,LOW,LOW);
   for (int i=0; i < strobeLoop; i++){
-    delay(100);
     setLeds(HIGH,LOW,LOW);
-    delay(100);
+    delay(200);
     setLeds(LOW,HIGH,LOW);
-    delay(100);
+    delay(200);
     setLeds(LOW,LOW,HIGH);
+    delay(200);
   }
   setLeds(LOW,LOW,LOW);
   //return the time taken.
