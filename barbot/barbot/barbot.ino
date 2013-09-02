@@ -1,12 +1,16 @@
 #include <Servo.h>
 
 const byte connectedServos = 5;
-Servo myServos[connectedServos];
+int starting_pin = 2;
+//Servo myServos[connectedServos];
+int myServos[connectedServos];
 
 void setup(){
   for(int s=0; s<connectedServos;s++){
-    myServos[s].attach(s+2); //set to pin s+2 (starts at pin 2)
-    closeServo(s); //close pin on setup
+    //myServos[s].attach(starting_pin+2); //set to pin s+2 (starts at pin 2)
+    myServos[s] = starting_pin + s;
+    pinMode(myServos[s],OUTPUT);
+    toggleServo(s,0); //close pin on setup
   }
   Serial.begin(9600); //begin serial output
 }
@@ -33,68 +37,114 @@ String readCommand(){
 
 void runCommand(String commandLine){
   //need to seperate command from parameters
-  String command = commandLine.substring(0,commandLine.indexOf(' '));
-  String parameters = commandLine.substring(commandLine.indexOf(' '));
+  int index = commandLine.indexOf(" ");
+  String command = commandLine.substring(0,index);
+  String parameters = commandLine.substring(index+1);
   
   if (command == "commands"){
-    //listCommands();
+    listCommands();
   }else if (command == "valves"){
     listValves();
   }else if (command == "open"){
-     openValve(parameters);
+     toggleValve(parameters,1);
   }else if (command == "close"){
-    //closeValve(parameters);
+    toggleValve(parameters,0);
   }else{
-    printError("Unknown command");
+    printError("Unknown command\""+command+"\"");
   }
 
 }
 
-void listValves(){
-  printSuccess((String)connectedServos);
+void listCommands(){
+  String msg;
+  msg = "\n";
+  //msg =msg + "commands: //list of commands\n";
+  msg =msg + "valves: //displays the number of valves and thier pins\n";
+  msg =msg + "open: [n [s]] //open valve n (optional) close after  s seconds\n";
+  msg =msg + "close: [n [s]] //close valve n (optional) after s seconds\n";
+  
+  msg =msg + "pass\"help\" as parameter for info on command";
+
+  printSuccess(msg);
 }
 
-void openValve(String parameters){
+void listValves(){
+  String msg = "\n";
+   for(int s=0; s<connectedServos;s++){
+     msg =msg + s +": pin "+(starting_pin + s) + "\n";
+   }
+  printSuccess(msg);
+}
+
+
+void toggleValve(String parameters,int open_valve){
+  String msg = "";
   if (parameters == "help"){
-    printSuccess("openvalve n [seconds]");
+    msg += (open_valve ? "open":"close");
+    msg +=" [valve_num] [seconds]";
+    printSuccess(msg);
   }else{
     int servo = -1;
     int seconds = -1;
-    
-    if(parameters.indexOf(" ")){
-      servo  = (int)parameters.substring(0,parameters.indexOf(" "));
-      seconds = (int)parameters.substring(parameters.indexOf(" "));
+    int index = parameters.indexOf(" ");
+    if(index > 0){
+      servo  = stringToInt(parameters.substring(0,index));
+      seconds = stringToInt(parameters.substring(index+1));
     }else{
-      servo = (int)parameters;
+      servo = stringToInt(parameters);
     }
    
-    if ((servo > 0) && (servo < connectedServos)){
-      openServo(servo);
+    if ((servo >= 0) && (servo < connectedServos)){
+      msg = "Valve " + (String)servo;
+      if (open_valve){
+        msg =msg + " opened and";
+        toggleServo(servo,1);
+      }
+ 
       if (seconds > 0){
         delay(seconds*1000);
-        closeServo(servo);
+        msg =msg + " after " + (String)seconds;
       }
-      printSuccess("Servo ".(String)servo + " opened. " + (seconds ? "Closed after " + (String)(seconds) + " seconds":""));
-    }else{
-      printError("Invalid valve number");
+      
+      if (!open_valve || (open_valve && seconds>0)){
+        msg= msg + " closed";
+        toggleServo(servo,0);
+      }
+      if (seconds > 0){
+        msg =msg + " after " + (String)seconds;
+      }      
+      printSuccess(msg);
+  }else{
+      msg = "Invalid valve number ("+ (String)servo + ")";
+      printError(msg);
     }
   }
 }
 
 void printSuccess(String message){
-  Serial.write("Success: " + message);
+  message = "Success: " + message;
+  Serial.println(message);
 }
 
 void printError(String message){
-  Serial.write("Error: " + message);
+  message = "Error: " + message;
+  Serial.write(message);
 }
 
-void openServo(int servo){
-  myServos[servo].write(170);
+void toggleServo(int servo,int open_servo){
+ // myServos[servo].write((open_servo ? HIGH:LOW));
+ if (open_servo){
+   digitalWrite(myServos[servo],HIGH);
+ }else{
+   digitalWrite(myServos[servo],LOW);
+ }
 }
 
-void closeServo(int servo){
-  myServos[servo].write(0);
+int stringToInt(String mystring){
+  String msg = mystring+ " to ";
+  long n =  mystring.toInt();
+  msg = msg + n;
+//  Serial.println(msg);
+  return n;
 }
-
 
