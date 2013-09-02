@@ -128,7 +128,7 @@ void printSuccess(String message){
 
 void printError(String message){
   message = "Error: " + message;
-  Serial.write(message);
+  Serial.println(message);
 }
 
 void toggleServo(int servo,int open_servo){
