@@ -26,8 +26,8 @@ void loop() {
 boolean buttonChanged() {
   boolean return_state = false;
   int current_state = digitalRead(button);
-  if (current_state && !button_state) {
- // if (current_state != button_state) {
+  if (current_state && !button_state) { //only trigger on button "on"
+ // if (current_state != button_state) { //trigger on every button press
     return_state =  true;
   }else if (!current_state){
     colorChange(10);
@@ -39,7 +39,7 @@ boolean buttonChanged() {
 void setButtonCount() {
   button_count++;
   
-  if (button_count > 2){
+  if (button_count > 3){
     button_count = 0;
   }
   
@@ -55,6 +55,15 @@ void colorChange(int count) {
       break;
     case 2:
       setColors(LOW,LOW,HIGH);
+      break;
+    case 3:
+      colorChange(0);
+      delay(300);
+      colorChange(1);
+      delay(300);
+      colorChange(2);
+      delay(300);
+      colorChange(4);
       break;
     default:
       setColors(LOW,LOW,LOW);
